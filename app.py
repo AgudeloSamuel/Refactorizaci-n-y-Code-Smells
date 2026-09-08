@@ -13,6 +13,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+# Límites horarios de cada jornada
+INICIO_DIURNA = time(5, 0)
+FIN_DIURNA = time(16, 0)
+INICIO_NOCTURNA = time(16, 0)
+FIN_NOCTURNA = time(23, 59)
+
 # ================== MODELOS ==================
 
 class Usuario(db.Model):
@@ -77,9 +83,9 @@ def hay_solapamiento(inicio_nuevo, fin_nuevo, registros, excluir_id=None):
 
 def validar_jornada(jornada, inicio, fin):
     if jornada == "Diurna":
-        return time(5,0) <= inicio <= time(16,0) and time(5,0) <= fin <= time(16,0)
+        return INICIO_DIURNA <= inicio <= FIN_DIURNA and INICIO_DIURNA <= fin <= FIN_DIURNA
     elif jornada == "Nocturna":
-        return time(16,0) <= inicio <= time(23,59) and time(16,0) <= fin <= time(23,59)
+        return INICIO_NOCTURNA <= inicio <= FIN_NOCTURNA and INICIO_NOCTURNA <= fin <= FIN_NOCTURNA
     return False
 
 def validar_horario(profesor, dia, salon, jornada, inicio_nuevo, fin_nuevo, excluir_id=None):
