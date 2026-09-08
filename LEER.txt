@@ -1,0 +1,12 @@
+El URL para entrar a la pagina es: http://127.0.0.1:5000/login
+-Admin:
+ Usuario: admin
+ Contraseña: admin123
+
+-Profesor:
+ Usuario: Juan Gomez
+ Contraseña: 1234
+
+-Estudiante:
+ Usuario: Pedro Sanchez
+ Contraseña: 0000
