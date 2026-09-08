@@ -60,13 +60,17 @@ def logout():
 
 # ================== VALIDACIONES ==================
 
+def a_hora(texto):
+    """Convierte un texto 'HH:MM' en un objeto time."""
+    return datetime.strptime(texto, "%H:%M").time()
+
 def hay_solapamiento(inicio_nuevo, fin_nuevo, registros, excluir_id=None):
     """Devuelve True si el rango [inicio_nuevo, fin_nuevo) choca con algun registro."""
     for h in registros:
         if excluir_id is not None and h.id == excluir_id:
             continue
-        ini = datetime.strptime(h.inicio, "%H:%M").time()
-        fin_h = datetime.strptime(h.fin, "%H:%M").time()
+        ini = a_hora(h.inicio)
+        fin_h = a_hora(h.fin)
         if inicio_nuevo < fin_h and fin_nuevo > ini:
             return True
     return False
@@ -144,8 +148,8 @@ def agregar():
     salon = request.form["salon"]
     jornada = request.form["jornada"]
 
-    inicio_nuevo = datetime.strptime(inicio, "%H:%M").time()
-    fin_nuevo = datetime.strptime(fin, "%H:%M").time()
+    inicio_nuevo = a_hora(inicio)
+    fin_nuevo = a_hora(fin)
 
     error = validar_horario(profesor, dia, salon, jornada, inicio_nuevo, fin_nuevo)
     if error:
@@ -193,8 +197,8 @@ def editar(id):
         salon = request.form["salon"]
         jornada = request.form["jornada"]
 
-        inicio_nuevo = datetime.strptime(inicio, "%H:%M").time()
-        fin_nuevo = datetime.strptime(fin, "%H:%M").time()
+        inicio_nuevo = a_hora(inicio)
+        fin_nuevo = a_hora(fin)
 
         error = validar_horario(
             horario.profesor, dia, salon, jornada,
