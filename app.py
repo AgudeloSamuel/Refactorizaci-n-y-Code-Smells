@@ -196,22 +196,12 @@ def editar(id):
         inicio_nuevo = datetime.strptime(inicio, "%H:%M").time()
         fin_nuevo = datetime.strptime(fin, "%H:%M").time()
 
-        if inicio_nuevo >= fin_nuevo:
-            flash("Hora inválida", "error")
-            return redirect(f"/editar/{id}")
-
-        if not validar_jornada(jornada, inicio_nuevo, fin_nuevo):
-            flash("Horario fuera de la jornada", "error")
-            return redirect(f"/editar/{id}")
-
-        salon_ocupado = Horario.query.filter_by(salon=salon, dia=dia).all()
-        if hay_solapamiento(inicio_nuevo, fin_nuevo, salon_ocupado, excluir_id=horario.id):
-            flash("El salón ya está ocupado", "error")
-            return redirect(f"/editar/{id}")
-
-        profesor_ocupado = Horario.query.filter_by(profesor=horario.profesor, dia=dia).all()
-        if hay_solapamiento(inicio_nuevo, fin_nuevo, profesor_ocupado, excluir_id=horario.id):
-            flash("El profesor ya tiene clase en ese horario", "error")
+        error = validar_horario(
+            horario.profesor, dia, salon, jornada,
+            inicio_nuevo, fin_nuevo, excluir_id=horario.id
+        )
+        if error:
+            flash(error, "error")
             return redirect(f"/editar/{id}")
 
         horario.materia = materia
