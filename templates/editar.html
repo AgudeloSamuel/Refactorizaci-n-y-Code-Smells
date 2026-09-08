@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Horario</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>Editar Horario</h1>
+        <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
+    </div>
+
+    <a href="/">⬅ Volver</a>
+
+    <form method="POST">
+        <input type="text" name="materia" value="{{ horario.materia }}" required>
+
+        <select name="dia">
+            <option {% if horario.dia == "Lunes" %}selected{% endif %}>Lunes</option>
+            <option {% if horario.dia == "Martes" %}selected{% endif %}>Martes</option>
+            <option {% if horario.dia == "Miércoles" %}selected{% endif %}>Miércoles</option>
+            <option {% if horario.dia == "Jueves" %}selected{% endif %}>Jueves</option>
+            <option {% if horario.dia == "Viernes" %}selected{% endif %}>Viernes</option>
+        </select>
+
+        <select name="jornada">
+            <option {% if horario.jornada == "Diurna" %}selected{% endif %}>Diurna</option>
+            <option {% if horario.jornada == "Nocturna" %}selected{% endif %}>Nocturna</option>
+        </select>
+
+        <input type="time" name="inicio" value="{{ horario.inicio }}" required>
+        <input type="time" name="fin" value="{{ horario.fin }}" required>
+
+        <input type="text" name="salon" value="{{ horario.salon }}" required>
+
+        <button type="submit">Guardar cambios</button>
+    </form>
+
+    {% if rol == "admin" %}
+    <form action="/eliminar/{{ horario.id }}" method="POST"
+          onsubmit="return confirm('¿Eliminar esta clase?');">
+        <button type="submit" style="background:red;">Eliminar</button>
+    </form>
+    {% endif %}
+
+</div>
+
+</body>
+</html>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="alerts">
+      {% for category, message in messages %}
+        <div class="alert {{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
