@@ -78,6 +78,24 @@ def validar_jornada(jornada, inicio, fin):
         return time(16,0) <= inicio <= time(23,59) and time(16,0) <= fin <= time(23,59)
     return False
 
+def validar_horario(profesor, dia, salon, jornada, inicio_nuevo, fin_nuevo, excluir_id=None):
+    """Devuelve un mensaje de error si el horario no es valido, o None si es valido."""
+    if inicio_nuevo >= fin_nuevo:
+        return "Hora inválida"
+
+    if not validar_jornada(jornada, inicio_nuevo, fin_nuevo):
+        return "Horario fuera de la jornada"
+
+    salon_ocupado = Horario.query.filter_by(salon=salon, dia=dia).all()
+    if hay_solapamiento(inicio_nuevo, fin_nuevo, salon_ocupado, excluir_id):
+        return "El salón ya está ocupado en ese horario"
+
+    profesor_ocupado = Horario.query.filter_by(profesor=profesor, dia=dia).all()
+    if hay_solapamiento(inicio_nuevo, fin_nuevo, profesor_ocupado, excluir_id):
+        return "El profesor ya tiene clase en ese horario"
+
+    return None
+
 # ================== INDEX ==================
 
 @app.route("/")
@@ -129,22 +147,9 @@ def agregar():
     inicio_nuevo = datetime.strptime(inicio, "%H:%M").time()
     fin_nuevo = datetime.strptime(fin, "%H:%M").time()
 
-    if inicio_nuevo >= fin_nuevo:
-        flash("Hora inválida", "error")
-        return redirect("/")
-
-    if not validar_jornada(jornada, inicio_nuevo, fin_nuevo):
-        flash("Horario fuera de la jornada", "error")
-        return redirect("/")
-
-    salon_ocupado = Horario.query.filter_by(salon=salon, dia=dia).all()
-    if hay_solapamiento(inicio_nuevo, fin_nuevo, salon_ocupado):
-        flash("El salón ya está ocupado en ese horario", "error")
-        return redirect("/")
-
-    profesor_ocupado = Horario.query.filter_by(profesor=profesor, dia=dia).all()
-    if hay_solapamiento(inicio_nuevo, fin_nuevo, profesor_ocupado):
-        flash("El profesor ya tiene clase en ese horario", "error")
+    error = validar_horario(profesor, dia, salon, jornada, inicio_nuevo, fin_nuevo)
+    if error:
+        flash(error, "error")
         return redirect("/")
 
     nuevo = Horario(
