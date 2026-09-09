@@ -56,6 +56,12 @@ class Horario(db.Model):
     salon = db.Column(db.String(10), nullable=False)
     jornada = db.Column(db.String(10), nullable=False)
 
+    def choca_con(self, inicio_nuevo, fin_nuevo):
+        """Indica si este horario se solapa con el rango dado."""
+        ini = a_hora(self.inicio)
+        fin_h = a_hora(self.fin)
+        return inicio_nuevo < fin_h and fin_nuevo > ini
+
 class DatosHorario:
     """Agrupa los campos de un horario que siempre viajan juntos."""
     def __init__(self, profesor, materia, dia, inicio, fin, salon, jornada):
@@ -114,14 +120,11 @@ def a_hora(texto):
 
 def hay_solapamiento(inicio_nuevo, fin_nuevo, registros, excluir_id=None):
     """Devuelve True si el rango [inicio_nuevo, fin_nuevo) choca con algun registro."""
-    for h in registros:
-        if excluir_id is not None and h.id == excluir_id:
-            continue
-        ini = a_hora(h.inicio)
-        fin_h = a_hora(h.fin)
-        if inicio_nuevo < fin_h and fin_nuevo > ini:
-            return True
-    return False
+    return any(
+        h.choca_con(inicio_nuevo, fin_nuevo)
+        for h in registros
+        if h.id != excluir_id
+    )
 
 def validar_jornada(jornada, inicio, fin):
     if jornada == "Diurna":
