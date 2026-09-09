@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, time
 import os
+from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta"
@@ -23,6 +24,19 @@ FIN_NOCTURNA = time(23, 59)
 ROL_ADMIN = "admin"
 ROL_PROFESOR = "profesor"
 ROL_ESTUDIANTE = "estudiante"
+
+
+def requiere_rol(rol_requerido):
+    """Restringe el acceso a la ruta a un rol concreto."""
+    def decorador(vista):
+        @wraps(vista)
+        def envoltura(*args, **kwargs):
+            if session.get("rol") != rol_requerido:
+                flash("No autorizado", "error")
+                return redirect("/")
+            return vista(*args, **kwargs)
+        return envoltura
+    return decorador
 
 # ================== MODELOS ==================
 
@@ -146,11 +160,8 @@ def index():
 # ================== AGREGAR ==================
 
 @app.route("/agregar", methods=["POST"])
+@requiere_rol(ROL_ADMIN)
 def agregar():
-    if session.get("rol") != ROL_ADMIN:
-        flash("No autorizado", "error")
-        return redirect("/")
-
     profesor = request.form["profesor"]
     materia = request.form["materia"]
     dia = request.form["dia"]
@@ -235,11 +246,8 @@ def editar(id):
 # ================== ELIMINAR ==================
 
 @app.route("/eliminar/<int:id>", methods=["POST"])
+@requiere_rol(ROL_ADMIN)
 def eliminar(id):
-    if session.get("rol") != ROL_ADMIN:
-        flash("No autorizado", "error")
-        return redirect("/")
-
     horario = Horario.query.get_or_404(id)
     db.session.delete(horario)
     db.session.commit()
