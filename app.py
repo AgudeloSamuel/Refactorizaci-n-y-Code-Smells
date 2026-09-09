@@ -38,8 +38,6 @@ def requiere_rol(rol_requerido):
         return envoltura
     return decorador
 
-# ================== MODELOS ==================
-
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), unique=True, nullable=False)
@@ -88,9 +86,12 @@ class DatosHorario:
 with app.app_context():
     db.create_all()
 
-# ================== LOGIN ==================
-
 @app.route("/login", methods=["GET", "POST"])
+def credenciales_validas(usuario, password):
+    """Verifica que el usuario exista y la contraseña coincida."""
+    return usuario is not None and check_password_hash(usuario.password, password)
+
+
 def login():
     if request.method == "POST":
         nombre = request.form["nombre"]
@@ -98,12 +99,12 @@ def login():
 
         usuario = Usuario.query.filter_by(nombre=nombre).first()
 
-        if usuario and check_password_hash(usuario.password, password):
+        if credenciales_validas(usuario, password):
             session["usuario"] = usuario.nombre
             session["rol"] = usuario.rol
             return redirect("/")
-        else:
-            flash("Usuario o contraseña incorrectos", "error")
+
+        flash("Usuario o contraseña incorrectos", "error")
 
     return render_template("login.html")
 
@@ -111,8 +112,6 @@ def login():
 def logout():
     session.clear()
     return redirect("/login")
-
-# ================== VALIDACIONES ==================
 
 def a_hora(texto):
     """Convierte un texto 'HH:MM' en un objeto time."""
@@ -151,8 +150,6 @@ def validar_horario(profesor, dia, salon, jornada, inicio_nuevo, fin_nuevo, excl
 
     return None
 
-# ================== INDEX ==================
-
 @app.route("/")
 def index():
     if "usuario" not in session:
@@ -183,8 +180,6 @@ def index():
     horarios = query.all()
     return render_template("index.html", horarios=horarios, rol=rol)
 
-# ================== AGREGAR ==================
-
 @app.route("/agregar", methods=["POST"])
 @requiere_rol(ROL_ADMIN)
 def agregar():
@@ -213,8 +208,6 @@ def agregar():
 
     flash("Horario agregado correctamente", "success")
     return redirect("/")
-
-# ================== EDITAR ==================
 
 @app.route("/editar/<int:id>", methods=["GET", "POST"])
 def editar(id):
@@ -258,8 +251,6 @@ def editar(id):
 
     return render_template("editar.html", horario=horario, rol=session["rol"])
 
-# ================== ELIMINAR ==================
-
 @app.route("/eliminar/<int:id>", methods=["POST"])
 @requiere_rol(ROL_ADMIN)
 def eliminar(id):
@@ -269,8 +260,6 @@ def eliminar(id):
 
     flash("Horario eliminado", "success")
     return redirect("/")
-
-# ================== RUN ==================
 
 if __name__ == "__main__":
     app.run(debug=True)
