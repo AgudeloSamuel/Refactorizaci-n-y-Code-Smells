@@ -19,6 +19,11 @@ FIN_DIURNA = time(16, 0)
 INICIO_NOCTURNA = time(16, 0)
 FIN_NOCTURNA = time(23, 59)
 
+# Roles del sistema
+ROL_ADMIN = "admin"
+ROL_PROFESOR = "profesor"
+ROL_ESTUDIANTE = "estudiante"
+
 # ================== MODELOS ==================
 
 class Usuario(db.Model):
@@ -117,7 +122,7 @@ def index():
     usuario = session["usuario"]
     busqueda = request.args.get("busqueda")
 
-    if rol == "profesor":
+    if rol == ROL_PROFESOR:
         query = Horario.query.filter_by(profesor=usuario)
     else:
         query = Horario.query
@@ -142,7 +147,7 @@ def index():
 
 @app.route("/agregar", methods=["POST"])
 def agregar():
-    if session.get("rol") != "admin":
+    if session.get("rol") != ROL_ADMIN:
         flash("No autorizado", "error")
         return redirect("/")
 
@@ -187,11 +192,11 @@ def editar(id):
 
     horario = Horario.query.get_or_404(id)
 
-    if session["rol"] == "estudiante":
+    if session["rol"] == ROL_ESTUDIANTE:
         flash("No autorizado", "error")
         return redirect("/")
 
-    if session["rol"] == "profesor" and horario.profesor != session["usuario"]:
+    if session["rol"] == ROL_PROFESOR and horario.profesor != session["usuario"]:
         flash("No autorizado", "error")
         return redirect("/")
 
@@ -231,7 +236,7 @@ def editar(id):
 
 @app.route("/eliminar/<int:id>", methods=["POST"])
 def eliminar(id):
-    if session.get("rol") != "admin":
+    if session.get("rol") != ROL_ADMIN:
         flash("No autorizado", "error")
         return redirect("/")
 
