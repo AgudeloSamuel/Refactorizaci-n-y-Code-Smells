@@ -24,6 +24,14 @@ ROL_ADMIN = "admin"
 ROL_PROFESOR = "profesor"
 ROL_ESTUDIANTE = "estudiante"
 
+# Rutas de la aplicación
+RUTA_INDEX = "/"
+RUTA_LOGIN = "/login"
+
+
+def ruta_editar(id):
+    return f"/editar/{id}"
+
 
 def requiere_rol(rol_requerido):
     """Restringe el acceso a la ruta a un rol concreto."""
@@ -32,7 +40,7 @@ def requiere_rol(rol_requerido):
         def envoltura(*args, **kwargs):
             if sesion.rol_actual() != rol_requerido:
                 flash("No autorizado", "error")
-                return redirect("/")
+                return redirect(RUTA_INDEX)
             return vista(*args, **kwargs)
         return envoltura
     return decorador
@@ -53,7 +61,7 @@ def login():
 
         if credenciales_validas(usuario, password):
             sesion.iniciar(usuario.nombre, usuario.rol)
-            return redirect("/")
+            return redirect(RUTA_INDEX)
 
         flash("Usuario o contraseña incorrectos", "error")
 
@@ -63,7 +71,7 @@ def login():
 @app.route("/logout")
 def logout():
     sesion.cerrar()
-    return redirect("/login")
+    return redirect(RUTA_LOGIN)
 
 
 def aplicar_busqueda(query, busqueda):
@@ -84,7 +92,7 @@ def aplicar_busqueda(query, busqueda):
 @app.route("/")
 def index():
     if not sesion.hay_sesion():
-        return redirect("/login")
+        return redirect(RUTA_LOGIN)
 
     rol = sesion.rol_actual()
     usuario = sesion.usuario_actual()
@@ -111,7 +119,7 @@ def agregar():
     error = validar_horario(datos, inicio_nuevo, fin_nuevo)
     if error:
         flash(error, "error")
-        return redirect("/")
+        return redirect(RUTA_INDEX)
 
     nuevo = Horario(
         profesor=datos.profesor,
@@ -127,23 +135,23 @@ def agregar():
     db.session.commit()
 
     flash("Horario agregado correctamente", "success")
-    return redirect("/")
+    return redirect(RUTA_INDEX)
 
 
 @app.route("/editar/<int:id>", methods=["GET", "POST"])
 def editar(id):
     if not sesion.hay_sesion():
-        return redirect("/login")
+        return redirect(RUTA_LOGIN)
 
     horario = Horario.query.get_or_404(id)
 
     if sesion.rol_actual() == ROL_ESTUDIANTE:
         flash("No autorizado", "error")
-        return redirect("/")
+        return redirect(RUTA_INDEX)
 
     if sesion.rol_actual() == ROL_PROFESOR and horario.profesor != sesion.usuario_actual():
         flash("No autorizado", "error")
-        return redirect("/")
+        return redirect(RUTA_INDEX)
 
     if request.method == "POST":
         datos = DatosHorario.desde_formulario(request.form, profesor=horario.profesor)
@@ -154,7 +162,7 @@ def editar(id):
         error = validar_horario(datos, inicio_nuevo, fin_nuevo, excluir_id=horario.id)
         if error:
             flash(error, "error")
-            return redirect(f"/editar/{id}")
+            return redirect(ruta_editar(id))
 
         horario.materia = datos.materia
         horario.dia = datos.dia
@@ -165,7 +173,7 @@ def editar(id):
 
         db.session.commit()
         flash("Horario actualizado", "success")
-        return redirect("/")
+        return redirect(RUTA_INDEX)
 
     return render_template("editar.html", horario=horario, rol=sesion.rol_actual())
 
@@ -178,7 +186,7 @@ def eliminar(id):
     db.session.commit()
 
     flash("Horario eliminado", "success")
-    return redirect("/")
+    return redirect(RUTA_INDEX)
 
 
 if __name__ == "__main__":
