@@ -56,6 +56,29 @@ class Horario(db.Model):
     salon = db.Column(db.String(10), nullable=False)
     jornada = db.Column(db.String(10), nullable=False)
 
+class DatosHorario:
+    """Agrupa los campos de un horario que siempre viajan juntos."""
+    def __init__(self, profesor, materia, dia, inicio, fin, salon, jornada):
+        self.profesor = profesor
+        self.materia = materia
+        self.dia = dia
+        self.inicio = inicio
+        self.fin = fin
+        self.salon = salon
+        self.jornada = jornada
+
+    @classmethod
+    def desde_formulario(cls, form, profesor=None):
+        return cls(
+            profesor=profesor if profesor is not None else form["profesor"],
+            materia=form["materia"],
+            dia=form["dia"],
+            inicio=form["inicio"],
+            fin=form["fin"],
+            salon=form["salon"],
+            jornada=form["jornada"],
+        )
+
 with app.app_context():
     db.create_all()
 
@@ -162,30 +185,24 @@ def index():
 @app.route("/agregar", methods=["POST"])
 @requiere_rol(ROL_ADMIN)
 def agregar():
-    profesor = request.form["profesor"]
-    materia = request.form["materia"]
-    dia = request.form["dia"]
-    inicio = request.form["inicio"]
-    fin = request.form["fin"]
-    salon = request.form["salon"]
-    jornada = request.form["jornada"]
+    datos = DatosHorario.desde_formulario(request.form)
 
-    inicio_nuevo = a_hora(inicio)
-    fin_nuevo = a_hora(fin)
+    inicio_nuevo = a_hora(datos.inicio)
+    fin_nuevo = a_hora(datos.fin)
 
-    error = validar_horario(profesor, dia, salon, jornada, inicio_nuevo, fin_nuevo)
+    error = validar_horario(datos.profesor, datos.dia, datos.salon, datos.jornada, inicio_nuevo, fin_nuevo)
     if error:
         flash(error, "error")
         return redirect("/")
 
     nuevo = Horario(
-        profesor=profesor,
-        materia=materia,
-        dia=dia,
-        inicio=inicio,
-        fin=fin,
-        salon=salon,
-        jornada=jornada
+        profesor=datos.profesor,
+        materia=datos.materia,
+        dia=datos.dia,
+        inicio=datos.inicio,
+        fin=datos.fin,
+        salon=datos.salon,
+        jornada=datos.jornada
     )
 
     db.session.add(nuevo)
@@ -212,30 +229,25 @@ def editar(id):
         return redirect("/")
 
     if request.method == "POST":
-        materia = request.form["materia"]
-        dia = request.form["dia"]
-        inicio = request.form["inicio"]
-        fin = request.form["fin"]
-        salon = request.form["salon"]
-        jornada = request.form["jornada"]
+        datos = DatosHorario.desde_formulario(request.form, profesor=horario.profesor)
 
-        inicio_nuevo = a_hora(inicio)
-        fin_nuevo = a_hora(fin)
+        inicio_nuevo = a_hora(datos.inicio)
+        fin_nuevo = a_hora(datos.fin)
 
         error = validar_horario(
-            horario.profesor, dia, salon, jornada,
+            datos.profesor, datos.dia, datos.salon, datos.jornada,
             inicio_nuevo, fin_nuevo, excluir_id=horario.id
         )
         if error:
             flash(error, "error")
             return redirect(f"/editar/{id}")
 
-        horario.materia = materia
-        horario.dia = dia
-        horario.inicio = inicio
-        horario.fin = fin
-        horario.salon = salon
-        horario.jornada = jornada
+        horario.materia = datos.materia
+        horario.dia = datos.dia
+        horario.inicio = datos.inicio
+        horario.fin = datos.fin
+        horario.salon = datos.salon
+        horario.jornada = datos.jornada
 
         db.session.commit()
         flash("Horario actualizado", "success")
